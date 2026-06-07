@@ -3,40 +3,80 @@ package org.ufma.main;
 import org.ufma.parser.VMParser;
 import org.ufma.parser.CommandType;
 import org.ufma.codewriter.CodeWriter;
+
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VMTranslator {
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Erro: Passe o arquivo .vm como argumento.");
+            System.out.println("Erro: Forneca o caminho de um arquivo .vm ou de um diretorio.");
             return;
         }
 
-        String input = args[0];
-        String output = input.replace(".vm", ".asm");
+        File inputPath = new File(args[0]);
+        List<File> vmFiles = new ArrayList<>();
+        String outputFilename;
+
+        if (inputPath.isFile()) {
+            if (inputPath.getName().endsWith(".vm")) {
+                vmFiles.add(inputPath);
+                outputFilename = inputPath.getAbsolutePath().replace(".vm", ".asm");
+            } else {
+                System.out.println("Erro: O arquivo fornecido nao possui a extensao .vm");
+                return;
+            }
+        } else if (inputPath.isDirectory()) {
+            String path = inputPath.getAbsolutePath();
+            outputFilename = path + File.separator + inputPath.getName() + ".asm";
+
+            File[] files = inputPath.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isFile() && f.getName().endsWith(".vm")) {
+                        vmFiles.add(f);
+                    }
+                }
+            }
+        } else {
+            System.out.println("Erro: Caminho invalido.");
+            return;
+        }
+
+        if (vmFiles.isEmpty()) {
+            System.out.println("Nenhum arquivo .vm encontrado para traduzir.");
+            return;
+        }
 
         try {
-            VMParser parser = new VMParser(input);
-            CodeWriter writer = new CodeWriter(output);
+            CodeWriter writer = new CodeWriter(outputFilename);
+            System.out.println("Gerando arquivo unificado: " + outputFilename);
 
-            while (parser.hasMoreCommands()) {
-                parser.advance();
-                CommandType type = parser.commandType();
+            for (File vmFile : vmFiles) {
+                System.out.println("Traduzindo: " + vmFile.getName());
+                VMParser parser = new VMParser(vmFile.getAbsolutePath());
 
-                if (type == CommandType.C_PUSH) {
-                    writer.writePushPop("push", parser.arg1(), parser.arg2());
-                } else if (type == CommandType.C_POP) {
-                    writer.writePushPop("pop", parser.arg1(), parser.arg2());
-                } else if (type == CommandType.C_ARITHMETIC) {
-                    writer.writeArithmetic(parser.arg1());
+                while (parser.hasMoreCommands()) {
+                    parser.advance();
+                    CommandType type = parser.commandType();
+
+                    if (type == CommandType.C_PUSH) {
+                        writer.writePushPop("push", parser.arg1(), parser.arg2());
+                    } else if (type == CommandType.C_POP) {
+                        writer.writePushPop("pop", parser.arg1(), parser.arg2());
+                    } else if (type == CommandType.C_ARITHMETIC) {
+                        writer.writeArithmetic(parser.arg1());
+                    }
                 }
             }
 
             writer.close();
-            System.out.println("Pronto! Arquivo gerado em: " + output);
+            System.out.println(" TRADUCAO CONCLUIDA COM SUCESSO!");
 
         } catch (IOException e) {
-            System.out.println("Erro: " + e.getMessage());
+            System.out.println("Erro ao processar traducao: " + e.getMessage());
         }
     }
 }
