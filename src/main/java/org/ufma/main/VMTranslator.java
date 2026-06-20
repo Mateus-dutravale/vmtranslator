@@ -54,7 +54,14 @@ public class VMTranslator {
             CodeWriter writer = new CodeWriter(outputFilename);
             System.out.println("Gerando arquivo unificado: " + outputFilename);
 
+            // SE FOR DIRETÓRIO, INJETA O BOOTSTRAP ANTES DE TRADUZIR OS ARQUIVOS
+            if (inputPath.isDirectory()) {
+                System.out.println("Injetando codigo de Bootstrapping...");
+                writer.writeInit();
+            }
+
             for (File vmFile : vmFiles) {
+
                 System.out.println("Traduzindo: " + vmFile.getName());
                 VMParser parser = new VMParser(vmFile.getAbsolutePath());
 
@@ -72,6 +79,7 @@ public class VMTranslator {
                 }
             }
 
+            // O arquivo só pode ser fechado depois que TODOS os arquivos .vm forem processados
             writer.close();
             System.out.println(" TRADUCAO CONCLUIDA COM SUCESSO!");
 

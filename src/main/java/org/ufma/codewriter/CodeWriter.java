@@ -176,6 +176,22 @@ public class CodeWriter {
         }
     }
 
+    public void writeInit() {
+        out.println("// Bootstrap: Inicializa SP em 256");
+        out.println("@256");
+        out.println("D=A");
+        out.println("@SP");
+        out.println("M=D");
+
+        // obriga o sistema a chamar a função Sys.init do S.O.
+        writeCall("Sys.init", 0);
+    }
+
+    public void writeCall(String functionName, int numArgs) {
+        // TODO (Gaby): Implementar a lógica de salvamento de estado e salto para a função
+    }
+
+
     public void close() {
         out.close();
     }
