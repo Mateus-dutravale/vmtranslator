@@ -45,12 +45,16 @@ public class VMParser {
     }
 
     public CommandType commandType() {
-        String baseCmd = currentCommand[0];
-        if (baseCmd.equals("push")) return CommandType.C_PUSH;
-        if (baseCmd.equals("pop")) return CommandType.C_POP;
-
-        // Comandos aritméticos e lógicos da Parte 1
-        return CommandType.C_ARITHMETIC;
+        String cmd = currentCommand[0];
+        if (cmd.equals("push")) return CommandType.C_PUSH;
+        else if (cmd.equals("pop")) return CommandType.C_POP;
+        else if (cmd.equals("label")) return CommandType.C_LABEL;
+        else if (cmd.equals("goto")) return CommandType.C_GOTO;
+        else if (cmd.equals("if-goto")) return CommandType.C_IF;
+        else if (cmd.equals("function")) return CommandType.C_FUNCTION;
+        else if (cmd.equals("call")) return CommandType.C_CALL;
+        else if (cmd.equals("return")) return CommandType.C_RETURN;
+        else return CommandType.C_ARITHMETIC;
     }
 
     public String arg1() {
