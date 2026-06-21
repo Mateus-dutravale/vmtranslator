@@ -6,21 +6,26 @@ import java.io.PrintWriter;
 
 public class CodeWriter {
     private PrintWriter out;
-    private int labelCounter = 0; // Gerador de labels unicas para eq, gt, lt
+    private int labelCounter = 0;
+    private int callCounter = 0; // Gerador de labels unicas para retornos de funcao
+    private String currentFileName = ""; // Guarda o nome do arquivo para as variaveis estaticas
 
     public CodeWriter(String filename) throws IOException {
         this.out = new PrintWriter(new FileWriter(filename));
+    }
+
+    public void setFileName(String fileName) {
+        this.currentFileName = fileName.replace(".vm", "");
     }
 
     public void writeArithmetic(String command) {
         out.println("// " + command);
 
         if (command.equals("add") || command.equals("sub") || command.equals("and") || command.equals("or")) {
-            // Operações binárias: tiram dois valores da pilha e cospem um
             out.println("@SP");
             out.println("AM=M-1");
-            out.println("D=M"); // D = Y
-            out.println("A=A-1"); // RAM[SP-1] é o X
+            out.println("D=M");
+            out.println("A=A-1");
 
             if (command.equals("add")) out.println("M=M+D");
             else if (command.equals("sub")) out.println("M=M-D");
@@ -28,7 +33,6 @@ public class CodeWriter {
             else if (command.equals("or"))  out.println("M=M|D");
 
         } else if (command.equals("neg") || command.equals("not")) {
-            // Operações unárias: modificam apenas o valor do topo da pilha
             out.println("@SP");
             out.println("A=M-1");
 
@@ -36,12 +40,11 @@ public class CodeWriter {
             else if (command.equals("not")) out.println("M=!M");
 
         } else if (command.equals("eq") || command.equals("gt") || command.equals("lt")) {
-            // Operações de comparação com Saltos (Jumps)
             out.println("@SP");
             out.println("AM=M-1");
-            out.println("D=M"); // D = Y
-            out.println("A=A-1"); // A aponta para X
-            out.println("D=M-D"); // D = X - Y
+            out.println("D=M");
+            out.println("A=A-1");
+            out.println("D=M-D");
 
             String jumpType = "";
             if (command.equals("eq")) jumpType = "JEQ";
@@ -52,16 +55,14 @@ public class CodeWriter {
             String labelFalse = "LABEL_FALSE_" + labelCounter;
 
             out.println("@" + labelTrue);
-            out.println("D;" + jumpType); // Se a condição for atendida, pula pro TRUE
+            out.println("D;" + jumpType);
 
-            // Caso seja FALSO: coloca 0 no topo da pilha
             out.println("@SP");
             out.println("A=M-1");
             out.println("M=0");
             out.println("@" + labelFalse);
-            out.println("0;JMP"); // Pula o bloco TRUE
+            out.println("0;JMP");
 
-            // Caso seja VERDADEIRO: coloca -1 (true na VM do Nand2Tetris)
             out.println("(" + labelTrue + ")");
             out.println("@SP");
             out.println("A=M-1");
@@ -90,7 +91,6 @@ public class CodeWriter {
                 out.println("@SP");
                 out.println("M=M+1");
             } else if (!baseReg.isEmpty()) {
-                // Segmentos básicos: local, argument, this, that
                 out.println("// push " + segment + " " + index);
                 out.println("@" + baseReg);
                 out.println("D=M");
@@ -103,7 +103,6 @@ public class CodeWriter {
                 out.println("@SP");
                 out.println("M=M+1");
             } else if (segment.equals("temp")) {
-                // Segmento temp mapeia fixo de RAM[5] a RAM[12]
                 out.println("// push temp " + index);
                 out.println("@" + (5 + index));
                 out.println("D=M");
@@ -113,7 +112,6 @@ public class CodeWriter {
                 out.println("@SP");
                 out.println("M=M+1");
             } else if (segment.equals("pointer")) {
-                // pointer 0 -> THIS (RAM[3]), pointer 1 -> THAT (RAM[4])
                 out.println("// push pointer " + index);
                 out.println("@" + (index == 0 ? "THIS" : "THAT"));
                 out.println("D=M");
@@ -123,9 +121,9 @@ public class CodeWriter {
                 out.println("@SP");
                 out.println("M=M+1");
             } else if (segment.equals("static")) {
-                // Mapeia em variáveis estáticas (partindo do endereço RAM[16])
+                // Atualizado para usar o nome do arquivo atual
                 out.println("// push static " + index);
-                out.println("@" + (16 + index));
+                out.println("@" + currentFileName + "." + index);
                 out.println("D=M");
                 out.println("@SP");
                 out.println("A=M");
@@ -135,22 +133,21 @@ public class CodeWriter {
             }
         } else if (commandType.equals("pop")) {
             if (!baseReg.isEmpty()) {
-                // Segmentos básicos: local, argument, this, that
                 out.println("// pop " + segment + " " + index);
                 out.println("@" + baseReg);
                 out.println("D=M");
                 out.println("@" + index);
                 out.println("D=D+A");
                 out.println("@R13");
-                out.println("M=D"); // Salva o endereço alvo em R13
+                out.println("M=D");
 
                 out.println("@SP");
                 out.println("AM=M-1");
-                out.println("D=M"); // D recebe o valor do topo da pilha
+                out.println("D=M");
 
                 out.println("@R13");
                 out.println("A=M");
-                out.println("M=D"); // Salva o valor no endereço alvo
+                out.println("M=D");
             } else if (segment.equals("temp")) {
                 out.println("// pop temp " + index);
                 out.println("@SP");
@@ -166,14 +163,90 @@ public class CodeWriter {
                 out.println("@" + (index == 0 ? "THIS" : "THAT"));
                 out.println("M=D");
             } else if (segment.equals("static")) {
+                // Atualizado para usar o nome do arquivo atual
                 out.println("// pop static " + index);
                 out.println("@SP");
                 out.println("AM=M-1");
                 out.println("D=M");
-                out.println("@" + (16 + index));
+                out.println("@" + currentFileName + "." + index);
                 out.println("M=D");
             }
         }
+    }
+
+    // --- NOVOS MÉTODOS DE FLUXO E FUNÇÃO (PARTE DA GABY) ---
+
+    public void writeLabel(String label) {
+        out.println("// label " + label);
+        out.println("(" + label + ")");
+    }
+
+    public void writeGoto(String label) {
+        out.println("// goto " + label);
+        out.println("@" + label);
+        out.println("0;JMP");
+    }
+
+    public void writeIf(String label) {
+        out.println("// if-goto " + label);
+        out.println("@SP");
+        out.println("AM=M-1");
+        out.println("D=M");
+        out.println("@" + label);
+        out.println("D;JNE");
+    }
+
+    public void writeFunction(String functionName, int numLocals) {
+        out.println("// function " + functionName + " " + numLocals);
+        out.println("(" + functionName + ")");
+        for (int i = 0; i < numLocals; i++) {
+            out.println("@0");
+            out.println("D=A");
+            out.println("@SP");
+            out.println("A=M");
+            out.println("M=D");
+            out.println("@SP");
+            out.println("M=M+1");
+        }
+    }
+
+    public void writeReturn() {
+        out.println("// return");
+        out.println("@LCL");
+        out.println("D=M");
+        out.println("@R13"); // R13 guarda o FRAME (LCL base)
+        out.println("M=D");
+
+        out.println("@5");
+        out.println("A=D-A");
+        out.println("D=M");
+        out.println("@R14"); // R14 guarda o RET (Endereço de retorno)
+        out.println("M=D");
+
+        out.println("@SP"); // *ARG = pop()
+        out.println("AM=M-1");
+        out.println("D=M");
+        out.println("@ARG");
+        out.println("A=M");
+        out.println("M=D");
+
+        out.println("@ARG"); // SP = ARG + 1
+        out.println("D=M+1");
+        out.println("@SP");
+        out.println("M=D");
+
+        String[] segments = {"THAT", "THIS", "ARG", "LCL"};
+        for (int i = 0; i < 4; i++) {
+            out.println("@R13");
+            out.println("AM=M-1");
+            out.println("D=M");
+            out.println("@" + segments[i]);
+            out.println("M=D");
+        }
+
+        out.println("@R14"); // goto RET
+        out.println("A=M");
+        out.println("0;JMP");
     }
 
     public void writeInit() {
@@ -183,14 +256,48 @@ public class CodeWriter {
         out.println("@SP");
         out.println("M=D");
 
-        // obriga o sistema a chamar a função Sys.init do S.O.
         writeCall("Sys.init", 0);
     }
 
     public void writeCall(String functionName, int numArgs) {
-        // TODO (Gaby): Implementar a lógica de salvamento de estado e salto para a função
-    }
+        String returnAddress = functionName + "$ret." + callCounter++;
+        out.println("// call " + functionName + " " + numArgs);
 
+        out.println("@" + returnAddress);
+        out.println("D=A");
+        out.println("@SP");
+        out.println("A=M");
+        out.println("M=D");
+        out.println("@SP");
+        out.println("M=M+1");
+
+        String[] segments = {"LCL", "ARG", "THIS", "THAT"};
+        for (String seg : segments) {
+            out.println("@" + seg);
+            out.println("D=M");
+            out.println("@SP");
+            out.println("A=M");
+            out.println("M=D");
+            out.println("@SP");
+            out.println("M=M+1");
+        }
+
+        out.println("@SP");
+        out.println("D=M");
+        out.println("@" + (numArgs + 5));
+        out.println("D=D-A");
+        out.println("@ARG");
+        out.println("M=D");
+
+        out.println("@SP");
+        out.println("D=M");
+        out.println("@LCL");
+        out.println("M=D");
+
+        writeGoto(functionName);
+
+        out.println("(" + returnAddress + ")");
+    }
 
     public void close() {
         out.close();
