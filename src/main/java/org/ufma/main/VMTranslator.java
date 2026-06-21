@@ -54,13 +54,15 @@ public class VMTranslator {
             CodeWriter writer = new CodeWriter(outputFilename);
             System.out.println("Gerando arquivo unificado: " + outputFilename);
 
-            // SE FOR DIRETÓRIO, INJETA O BOOTSTRAP ANTES DE TRADUZIR OS ARQUIVOS
+            // Injeta o Bootstrap antes de traduzir os arquivos se for um diretorio
             if (inputPath.isDirectory()) {
                 System.out.println("Injetando codigo de Bootstrapping...");
                 writer.writeInit();
             }
 
             for (File vmFile : vmFiles) {
+                // Informa ao CodeWriter o nome do arquivo atual para as variaveis estaticas
+                writer.setFileName(vmFile.getName());
 
                 System.out.println("Traduzindo: " + vmFile.getName());
                 VMParser parser = new VMParser(vmFile.getAbsolutePath());
@@ -75,13 +77,26 @@ public class VMTranslator {
                         writer.writePushPop("pop", parser.arg1(), parser.arg2());
                     } else if (type == CommandType.C_ARITHMETIC) {
                         writer.writeArithmetic(parser.arg1());
+                    } else if (type == CommandType.C_LABEL) {
+                        writer.writeLabel(parser.arg1());
+                    } else if (type == CommandType.C_GOTO) {
+                        writer.writeGoto(parser.arg1());
+                    } else if (type == CommandType.C_IF) {
+                        writer.writeIf(parser.arg1());
+                    } else if (type == CommandType.C_FUNCTION) {
+                        writer.writeFunction(parser.arg1(), parser.arg2());
+                    } else if (type == CommandType.C_RETURN) {
+                        writer.writeReturn();
+                    } else if (type == CommandType.C_CALL) {
+                        writer.writeCall(parser.arg1(), parser.arg2());
                     }
                 }
             }
 
-            // O arquivo só pode ser fechado depois que TODOS os arquivos .vm forem processados
             writer.close();
+            System.out.println("=========================================");
             System.out.println(" TRADUCAO CONCLUIDA COM SUCESSO!");
+            System.out.println("=========================================");
 
         } catch (IOException e) {
             System.out.println("Erro ao processar traducao: " + e.getMessage());
