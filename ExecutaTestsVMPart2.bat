@@ -14,6 +14,8 @@ if errorlevel 1 (
 )
 
 set "JAVA_CMD=java -cp bin org.ufma.main.VMTranslator"
+:: Caminhos das ferramentas do Nand2Tetris
+set "CPU_EMULATOR=%~dp0nand2tetris\tools\CPUEmulator.bat"
 set "TEXT_COMPARER=%~dp0nand2tetris\tools\TextComparer.bat"
 
 :: MAPEAMENTO DOS DIRETORIOS DE TESTE DO PROJETO 8
@@ -37,7 +39,25 @@ echo ======================================================
 
 echo.
 echo ======================================================
-echo      2. VALIDACAO AUTOMATICA (TEXTCOMPARER)
+echo      2. EXECUTANDO OS TESTES NO CPU EMULATOR (.TST -^> .OUT)
+echo ======================================================
+if exist "%CPU_EMULATOR%" (
+    echo [EXECUTANDO SIMULACOES...]
+    call "%CPU_EMULATOR%" "%DIR_BASIC_LOOP%\BasicLoop.tst"
+    call "%CPU_EMULATOR%" "%DIR_FIB_SERIES%\FibonacciSeries.tst"
+    call "%CPU_EMULATOR%" "%DIR_SIMPLE_FUNC%\SimpleFunction.tst"
+    call "%CPU_EMULATOR%" "%DIR_NESTED_CALL%\NestedCall.tst"
+    call "%CPU_EMULATOR%" "%DIR_FIB_ELEMENT%\FibonacciElement.tst"
+    call "%CPU_EMULATOR%" "%DIR_STATICS_TEST%\StaticsTest.tst"
+) else (
+    echo [ERRO] CPUEmulator.bat nao localizado em %CPU_EMULATOR%
+    pause
+    exit /b
+)
+
+echo.
+echo ======================================================
+echo      3. VALIDACAO AUTOMATICA (TEXTCOMPARER)
 echo ======================================================
 
 if exist "%TEXT_COMPARER%" (

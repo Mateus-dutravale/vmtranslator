@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VMParser {
-    private List<String[]> commands;
+
+    private final List<String[]> commands;
     private int currentIndex;
     private String[] currentCommand;
 
@@ -17,20 +18,25 @@ public class VMParser {
 
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
+
             while ((line = br.readLine()) != null) {
-                // Remove espaços nas pontas e ignora linhas vazias ou comentários completos
+
                 line = line.trim();
+
+                // Ignora linhas vazias e comentários completos
                 if (line.isEmpty() || line.startsWith("//")) {
                     continue;
                 }
 
-                // Remove comentários que ficam no final da linha de comando
-                if (line.contains("//")) {
-                    line = line.split("//")[0].trim();
+                // Remove comentários no final da linha
+                int commentIndex = line.indexOf("//");
+                if (commentIndex != -1) {
+                    line = line.substring(0, commentIndex).trim();
                 }
 
-                // Divide a linha por espaços (trata múltiplos espaços seguidos)
-                commands.add(line.split("\\s+"));
+                if (!line.isEmpty()) {
+                    commands.add(line.split("\\s+"));
+                }
             }
         }
     }
@@ -39,29 +45,61 @@ public class VMParser {
         return currentIndex < commands.size();
     }
 
+
     public void advance() {
-        currentCommand = commands.get(currentIndex);
-        currentIndex++;
+        if (hasMoreCommands()) {
+            currentCommand = commands.get(currentIndex++);
+        }
     }
 
     public CommandType commandType() {
-        String baseCmd = currentCommand[0];
-        if (baseCmd.equals("push")) return CommandType.C_PUSH;
-        if (baseCmd.equals("pop")) return CommandType.C_POP;
+        String cmd = currentCommand[0];
 
-        // Comandos aritméticos e lógicos da Parte 1
-        return CommandType.C_ARITHMETIC;
+        switch (cmd) {
+            case "push":
+                return CommandType.C_PUSH;
+
+            case "pop":
+                return CommandType.C_POP;
+
+            case "label":
+                return CommandType.C_LABEL;
+
+            case "goto":
+                return CommandType.C_GOTO;
+
+            case "if-goto":
+                return CommandType.C_IF;
+
+            case "function":
+                return CommandType.C_FUNCTION;
+
+            case "call":
+                return CommandType.C_CALL;
+
+            case "return":
+                return CommandType.C_RETURN;
+
+            default:
+                return CommandType.C_ARITHMETIC;
+        }
     }
 
     public String arg1() {
-        if (commandType() == CommandType.C_ARITHMETIC) {
-            return currentCommand[0]; // Retorna o próprio comando (ex: "add")
+        CommandType type = commandType();
+
+        if (type == CommandType.C_RETURN) {
+            throw new IllegalStateException("C_RETURN não possui arg1()");
         }
-        return currentCommand[1]; // Retorna o segmento (ex: "local")
+
+        if (type == CommandType.C_ARITHMETIC) {
+            return currentCommand[0];
+        }
+
+        return currentCommand[1];
     }
 
     public int arg2() {
-        // Apenas para push/pop nesta fase
         return Integer.parseInt(currentCommand[2]);
     }
 }
