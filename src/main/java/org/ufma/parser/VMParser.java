@@ -100,6 +100,7 @@ public class VMParser {
     }
 
     public int arg2() {
+        // Apenas para push/pop nesta fase
         return Integer.parseInt(currentCommand[2]);
     }
 }
