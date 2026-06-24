@@ -1,166 +1,176 @@
-# 🏛️ Tradutor de Máquina Virtual - VMTranslator (Nand2Tetris)
+# 🏛️ Tradutor de Máquina Virtual Completo - VMTranslator (Nand2Tetris)
 
-Projeto desenvolvido para a disciplina de **Compiladores** - Universidade Federal do Maranhão (UFMA).
+Projeto desenvolvido para a disciplina de **Compiladores** da **Universidade Federal do Maranhão (UFMA)**.
 
-## 👥 Integrantes e Matrículas
+---
+
+# 👥 Integrantes e Matrículas
 
 * **Gabryella Cruz Sousa** - Matrícula: `20250013701`
 * **Mateus Dutra Vale** - Matrícula: `20250071302`
 
-## 💻 Linguagem e Tecnologias
+---
+
+# 💻 Linguagem e Tecnologias
 
 * **Linguagem:** Java
 * **Ferramentas:** IntelliJ IDEA / Git
-* **Projeto Base:** Projeto 7 do curso **Nand2Tetris** (Unidade 1 - Virtual Machine I: Stack Arithmetic)
+* **Projeto Base:** Projetos 7 e 8 do curso **Nand2Tetris** (Virtual Machine I & II - Aritmética, Controle de Fluxo e Subrotinas)
 
-## 📂 Estrutura do Projeto
+---
 
-A organização do repositório garante que os scripts de teste funcionem de forma relativa, mantendo as ferramentas de validação integradas:
+# 📂 Estrutura do Projeto
+
+A organização do repositório garante que os scripts de teste funcionem utilizando caminhos relativos, mantendo as ferramentas oficiais de validação integradas e oferecendo suporte ao processamento de múltiplos arquivos `.vm` em um único diretório.
 
 ```plaintext
 vmtranslator/
-├── bin/                    # Binários compilados (.class)
-├── nand2tetris/            # Ferramentas e gabaritos oficiais
-├── src/main/java/          # Código-fonte modularizado por pacotes
+├── bin/                      # Binários compilados (.class)
+├── nand2tetris/              # Ferramentas e gabaritos oficiais do curso
+├── src/main/java/            # Código-fonte modularizado por pacotes
 │   └── org/ufma/
-│       ├── main/           # Orquestrador (VMTranslator.java)
-│       ├── parser/         # Analisador sintático (VMParser.java, CommandType.java)
-│       └── codewriter/     # Gerador de código (CodeWriter.java)
-├── test/                   # Pastas de teste oficiais (projects/7/)
-├── .gitignore              # Arquivos ignorados pelo Git
-├── README.md               # Documentação
-└── ExecutaTestesVM.bat     # Script de automação e compilação do projeto
+│       ├── main/             # Orquestrador principal (VMTranslator.java)
+│       ├── parser/           # Analisador sintático (VMParser.java, CommandType.java)
+│       └── codewriter/       # Gerador de código Assembly (CodeWriter.java)
+├── test/                     # Pastas de teste oficiais (projects/7 e projects/8)
+├── .gitignore                # Arquivos ignorados pelo Git
+├── README.md                 # Documentação do projeto
+└── ExecutaTestesVMPart2.bat  # Script de compilação automática e testes da Parte 2
 ```
+
+---
+
 # 🚀 Instruções para Compilar e Executar
 
 ## 1. Pré-requisitos
 
 * Java JDK instalado (**versão 11 ou superior** recomendada);
-* Sistema Operacional **Windows** (necessário para executar o script `.bat` de validação).
+* Sistema Operacional **Windows** (necessário para executar o script `.bat` de automação).
 
 ---
 
 ## 2. Compilação
 
-A partir da raiz do projeto, navegue até a pasta das classes e compile:
+A partir da raiz do projeto, compile todas as classes e direcione os binários para a pasta `bin`:
 
 ```bash
-cd src/main/java
-javac -d ../../../bin org/ufma/parser/*.java org/ufma/codewriter/*.java org/ufma/main/*.java
+mkdir bin
+
+javac -d bin src/main/java/org/ufma/parser/*.java \
+src/main/java/org/ufma/codewriter/*.java \
+src/main/java/org/ufma/main/*.java
 ```
 
 ---
 
 ## 3. Execução Manual
 
-O tradutor processa **diretórios completos**.
-
-O programa gerará um arquivo `.asm` unificado contendo o código Assembly Hack no mesmo diretório de origem.
+O tradutor possui suporte inteligente para **arquivos individuais** ou **diretórios completos**. Quando um diretório é informado, todos os arquivos `.vm` encontrados são unificados em um único arquivo `.asm`.
 
 ```bash
-# Estando na raiz do projeto
-java -cp bin org.ufma.main.VMTranslator "./test/projects/7/StackArithmetic/SimpleAdd"
+# Processando um diretório complexo
+# Gera FibonacciElement.asm na própria pasta de origem
+
+java -cp bin org.ufma.main.VMTranslator "./test/projects/8/FunctionCalls/FibonacciElement"
 ```
 
 ---
 
-# ✅ Validação e Testes Oficiais
+# ✅ Validação e Testes Oficiais (Parte 2)
 
-Para garantir a geração correta do código, desenvolvemos um script de automação que processa os programas de teste automaticamente.
+Para validar corretamente a geração do código de controle de fluxo e chamadas de subrotinas, utilize o script de automação responsável pela compilação e execução da suíte oficial de testes do Projeto 8.
 
 Na raiz do projeto, execute:
 
 ```bash
-.\ExecutaTestesVM.bat
+.\ExecutaTestesVMPart2.bat
 ```
 
 ## 1. O que o script realiza
 
-* **Build Automático:** compila todas as classes Java presentes em `src/main/java`, gerando os arquivos `.class` na pasta `bin`.
+* **Build Automático:** limpa e recompila todas as classes do projeto na pasta `bin`;
 
-* **Processamento em Lote:** percorre os diretórios configurados em `test/projects/7/` (`SimpleAdd` e `BasicTest`).
+* **Processamento em Lote:** percorre sequencialmente os diretórios de teste de fluxo (`BasicLoop` e `FibonacciSeries`) e de subrotinas (`SimpleFunction`, `NestedCall`, `FibonacciElement` e `StaticsTest`);
 
-* **Geração Assembly:** executa o tradutor para ler os arquivos `.vm` da pasta e produzir um único arquivo `.asm` correspondente.
+* **Injeção de Bootstrapping:** insere automaticamente a rotina de inicialização do sistema antes da tradução dos diretórios;
 
-* **Auditoria Automatizada:** utiliza o `TextComparer` oficial do Nand2Tetris para comparar o arquivo gerado com o gabarito esperado.
+* **Auditoria Automatizada:** utiliza o `TextComparer` oficial do Nand2Tetris para validar os arquivos gerados comparando-os com os respectivos gabaritos `.cmp`.
 
 ---
 
 ## 2. Emulação do Código Gerado
 
-Para validar o código produzido pelo tradutor:
+Para produzir os arquivos `.out` utilizados na validação bit a bit:
 
-1. Abra o **`CPUEmulator.bat`**, localizado em `nand2tetris/tools`;
+1. Abra o **CPUEmulator.bat**, localizado em `nand2tetris/tools`;
 2. Acesse **File → Load Script**;
-3. Carregue o script de teste desejado, por exemplo:
-
-```
-test/projects/7/MemoryAccess/BasicTest/BasicTest.tst
-```
-
-4. Ajuste a velocidade para **Fast**;
+3. Carregue o arquivo de teste desejado (por exemplo, `FibonacciElement.tst`);
+4. Ajuste a velocidade para **Fast** ou **No Animation**;
 5. Execute pressionando **F5**.
 
-O emulador irá executar o código Assembly no hardware virtual e gerar automaticamente o arquivo `.out`, utilizado para validação.
+O emulador executará o código Assembly simulado e gerará automaticamente o arquivo `.out` correspondente.
 
 ---
 
 # ⚙️ Detalhamento dos Componentes
 
+## `VMTranslator.java`
+
+Classe principal da aplicação.
+
+É responsável por:
+
+* Gerenciar os caminhos de entrada fornecidos pelo usuário;
+* Identificar arquivos individuais ou diretórios completos;
+* Organizar a lista de arquivos `.vm` a serem processados;
+* Acionar automaticamente a rotina de bootstrapping quando necessário;
+* Orquestrar todo o ciclo de tradução.
+
+---
+
 ## `CodeWriter.java`
 
-É o núcleo responsável pela geração do código Assembly.
+Núcleo responsável pela geração do código Assembly Hack.
 
-Suas responsabilidades incluem:
+Entre suas funções estão:
 
-* Converter instruções da máquina virtual em Assembly Hack;
+* Traduzir comandos da máquina virtual para Assembly;
 * Manipular diretamente o `Stack Pointer (SP)`;
-* Resolver operações envolvendo `LCL`, `ARG`, `THIS` e `THAT`;
-* Gerenciar o segmento `temp`;
-* Calcular offsets em tempo de execução para operações `push` e `pop`.
+* Gerenciar o escopo das variáveis do segmento `static` utilizando o nome do arquivo corrente;
+* Gerar labels exclusivos durante o processo de compilação.
 
 ---
 
 ## `VMParser.java`
 
-Responsável pela análise sintática dos arquivos `.vm`.
+Responsável pela análise sintática dos arquivos de entrada.
 
-Entre suas funções estão:
+Suas principais funções incluem:
 
 * Leitura sequencial das instruções;
-* Remoção de comentários e espaços em branco;
-* Identificação do tipo do comando (`C_PUSH`, `C_POP`, `C_ARITHMETIC`, etc.);
-* Extração dos argumentos utilizados pelo tradutor.
+* Remoção de espaços em branco desnecessários;
+* Eliminação de comentários completos ou ao final das linhas;
+* Extração dos comandos e respectivos argumentos para consumo do tradutor.
 
 ---
 
 ## `CommandType.java`
 
-Enumeração responsável por categorizar os comandos suportados pela especificação da máquina virtual.
+Enumeração responsável pela classificação abstrata dos comandos suportados pela máquina virtual, incluindo:
 
-Sua utilização simplifica a estrutura de decisão do tradutor principal, tornando o código mais organizado e seguro.
-
----
-
-## `VMTranslator.java`
-
-Classe principal da aplicação.
-
-Implementa a lógica responsável por:
-
-* Identificar automaticamente se o caminho informado corresponde a um único arquivo ou a um diretório;
-* Percorrer diretórios completos;
-* Processar sequencialmente todos os arquivos `.vm`;
-* Acionar os módulos de parsing e geração de código.
+* Operações aritméticas;
+* Comandos `push` e `pop`;
+* Controle de fluxo;
+* Chamadas e retornos de subrotinas.
 
 ---
 
-# ✨ Destaques da Implementação
+# ✨ Destaques da Implementação da Parte 2
 
-* **Geração de Labels Únicas:** implementação de um contador incremental para criação de rótulos exclusivos utilizados pelas operações relacionais (`eq`, `gt` e `lt`), evitando colisões durante os saltos condicionais (`JEQ`, `JGT` e `JLT`).
+* **Bootstrapping Nativo:** implementação da rotina de inicialização responsável por posicionar a pilha no endereço `RAM[256]` e realizar automaticamente a chamada da função `Sys.init`.
 
-* **Tratamento de Ponteiros e Temporários:** utilização do registrador virtual `R13` como armazenamento intermediário seguro durante operações complexas de `pop` envolvendo endereçamento indireto.
+* **Salvamento de Contexto Eficiente:** o mecanismo de `call` empilha dinamicamente o endereço de retorno e os ponteiros dos segmentos `LCL`, `ARG`, `THIS` e `THAT`, permitindo que o comando `return` restaure integralmente o contexto da função chamadora.
 
-* **Modularidade e Portabilidade:** todos os caminhos do projeto utilizam referências relativas dinâmicas (`%~dp0`), eliminando dependências de caminhos absolutos específicos da máquina de desenvolvimento.
+* **Geração de Labels Únicas:** utilização de contadores incrementais para criação de rótulos exclusivos em loops, desvios condicionais e retornos de subrotinas, evitando colisões no código Assembly unificado.
 
-* **Automação Completa:** integração do processo de **compilação**, **tradução** e **validação** em um único script executável (`ExecutaTestesVM.bat`), simplificando o fluxo de testes.
+* **Mapeamento de Múltiplos Arquivos:** isolamento das variáveis pertencentes ao segmento `static`, renomeando-as dinamicamente com base no nome do arquivo `.vm` de origem, garantindo independência entre módulos.
